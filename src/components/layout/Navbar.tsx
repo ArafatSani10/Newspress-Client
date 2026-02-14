@@ -151,11 +151,11 @@ export default function Navbar() {
                                     <Menu size={24} />
                                 </button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="w-[300px]">
+                            <SheetContent side="left" className="w-[350px]">
                                 <SheetHeader className="text-left border-b pb-4">
                                     <SheetTitle className="text-red-600 font-black">NEWSPRESS</SheetTitle>
                                 </SheetHeader>
-                                <div className="flex flex-col gap-4 mt-6">
+                                <div className="flex flex-col gap-4 p-5 mt-6">
                                     <Link href="/" className="text-lg font-bold border-b pb-2">{content.home}</Link>
                                     {content.categories.map((cat) => (
                                         <Link key={cat.id} href={`/category/${cat.slug}`} className="text-lg font-medium border-b pb-2 hover:text-red-600">
