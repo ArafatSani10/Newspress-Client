@@ -20,23 +20,15 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, Search, Menu, Clock, LogOut, User, Settings, Loader2 } from "lucide-react";
 import { userService } from "@/services/user.service";
+import { categoryService, Category } from "@/services/category.service";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-const categories = [
-    { id: "1", name: "National", slug: "national" },
-    { id: "2", name: "Politics", slug: "politics" },
-    { id: "3", name: "Economy", slug: "economy" },
-    { id: "4", name: "Sports", slug: "sports" },
-    { id: "5", name: "Entertainment", slug: "entertainment" },
-    { id: "6", name: "International", slug: "international" },
-    { id: "7", name: "Technology", slug: "technology" },
-];
-
 export default function Navbar() {
     const [currentTime, setCurrentTime] = useState("");
     const [session, setSession] = useState<any>(null);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -60,19 +52,23 @@ export default function Navbar() {
             );
         };
 
-        const fetchSession = async () => {
+        const initNavbar = async () => {
             try {
-                const { data } = await userService.getSession();
-                setSession(data);
+                const [sessionRes, categoryRes] = await Promise.all([
+                    userService.getSession(),
+                    categoryService.getAll()
+                ]);
+                setSession(sessionRes.data);
+                setCategories(categoryRes.data || []);
             } catch (err) {
-                setSession(null);
+                console.error(err);
             } finally {
                 setLoading(false);
             }
         };
 
         updateTime();
-        fetchSession();
+        initNavbar();
         const timer = setInterval(updateTime, 1000);
         return () => clearInterval(timer);
     }, []);
@@ -168,7 +164,7 @@ export default function Navbar() {
                         ) : session ? (
                             <DropdownMenu>
                                 <DropdownMenuTrigger className="outline-none">
-                                    <Avatar className="h-10 w-10 border border-gray-200 transition-transform hover:scale-105 active:scale-95">
+                                    <Avatar className="h-10 w-10 border border-gray-200 transition-transform ">
                                         <AvatarImage src={session.user.image || ""} />
                                         <AvatarFallback className="bg-red-600 text-white font-bold">
                                             {session.user.name.substring(0, 2).toUpperCase()}
@@ -184,8 +180,8 @@ export default function Navbar() {
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer py-2.5">
-                                        <Link href="/profile" className="flex items-center gap-2">
-                                            <User size={16} /> Profile
+                                        <Link href="/dashboard" className="flex items-center gap-2">
+                                            <User size={16} /> Dashboard
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer py-2.5">
@@ -224,7 +220,7 @@ export default function Navbar() {
                                         NEWS<span className="text-gray-900">PRESS</span>
                                     </SheetTitle>
                                 </SheetHeader>
-                                <div className="flex flex-col py-2">
+                                <div className="flex flex-col py-2 overflow-y-auto max-h-[calc(100vh-100px)]">
                                     <Link href="/" className="border-b px-6 py-4 text-sm font-semibold hover:bg-gray-50">Home</Link>
                                     {categories.map((cat) => (
                                         <Link key={cat.id} href={`/category/${cat.slug}`} className="border-b px-6 py-4 text-sm font-medium hover:bg-gray-50">
