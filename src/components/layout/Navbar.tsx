@@ -6,106 +6,124 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuTrigger
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
     Sheet,
     SheetContent,
     SheetHeader,
     SheetTitle,
-    SheetTrigger
+    SheetTrigger,
 } from "@/components/ui/sheet";
-import { ChevronDown, Languages, Search, Menu } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ChevronDown, Search, Menu, Clock, LogOut, User, Settings, Loader2 } from "lucide-react";
+import { userService } from "@/services/user.service";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
-const translations = {
-    BN: {
-        home: "প্রচ্ছদ",
-        more: "আরও",
-        today: "আজকের খবর",
-        login: "লগইন",
-        menu: "মেনু",
-        categories: [
-            { id: "1", name: "জাতীয়", slug: "national" },
-            { id: "2", name: "রাজনীতি", slug: "politics" },
-            { id: "3", name: "অর্থনীতি", slug: "economy" },
-            { id: "4", name: "খেলাধুলা", slug: "sports" },
-            { id: "5", name: "বিনোদন", slug: "entertainment" },
-            { id: "6", name: "আন্তর্জাতিক", slug: "international" },
-            { id: "7", name: "প্রযুক্তি", slug: "technology" },
-        ]
-    },
-    EN: {
-        home: "Home",
-        more: "More",
-        today: "Today's News",
-        login: "Login",
-        menu: "Menu",
-        categories: [
-            { id: "1", name: "National", slug: "national" },
-            { id: "2", name: "Politics", slug: "politics" },
-            { id: "3", name: "Economy", slug: "economy" },
-            { id: "4", name: "Sports", slug: "sports" },
-            { id: "5", name: "Entertainment", slug: "entertainment" },
-            { id: "6", name: "International", slug: "international" },
-            { id: "7", name: "Technology", slug: "technology" },
-        ]
-    }
-};
+const categories = [
+    { id: "1", name: "National", slug: "national" },
+    { id: "2", name: "Politics", slug: "politics" },
+    { id: "3", name: "Economy", slug: "economy" },
+    { id: "4", name: "Sports", slug: "sports" },
+    { id: "5", name: "Entertainment", slug: "entertainment" },
+    { id: "6", name: "International", slug: "international" },
+    { id: "7", name: "Technology", slug: "technology" },
+];
 
 export default function Navbar() {
-    const [lang, setLang] = useState<"BN" | "EN">("BN");
     const [currentTime, setCurrentTime] = useState("");
+    const [session, setSession] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
-    const content = translations[lang];
-    const mainCategories = content.categories.slice(0, 5);
-    const extraCategories = content.categories.slice(5);
+    const mainCategories = categories.slice(0, 5);
+    const extraCategories = categories.slice(5);
 
     useEffect(() => {
         const updateTime = () => {
             const now = new Date();
-            setCurrentTime(now.toLocaleDateString(lang === "BN" ? 'bn-BD' : 'en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: true
-            }));
+            setCurrentTime(
+                now.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                })
+            );
+        };
+
+        const fetchSession = async () => {
+            try {
+                const { data } = await userService.getSession();
+                setSession(data);
+            } catch (err) {
+                setSession(null);
+            } finally {
+                setLoading(false);
+            }
         };
 
         updateTime();
+        fetchSession();
         const timer = setInterval(updateTime, 1000);
         return () => clearInterval(timer);
-    }, [lang]);
+    }, []);
+
+    const handleLogout = async () => {
+        await authClient.signOut({
+            fetchOptions: {
+                onSuccess: () => {
+                    toast.success("Logged out successfully");
+                    setSession(null);
+                    router.push("/login");
+                    router.refresh();
+                },
+            },
+        });
+    };
 
     return (
-        <header className="border-b sticky top-0 bg-white/95 backdrop-blur-md z-50">
-            <div className="bg-gray-50 py-1.5 border-b hidden sm:block">
-                <div className="container mx-auto px-4 flex justify-between items-center text-[12px] text-gray-600 font-medium">
-                    <div className="min-w-[200px]">{currentTime}</div>
-                    <div>{content.today}</div>
+        <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-md">
+            <div className="hidden border-b border-gray-100 bg-gray-50/80 py-2 sm:block">
+                <div className="container mx-auto flex items-center justify-between px-4 text-xs font-medium text-gray-500">
+                    <div className="flex items-center gap-1.5">
+                        <Clock size={14} className="text-gray-400" />
+                        <span>{currentTime}</span>
+                    </div>
+                    <div className=" text-red-600 font-bold tracking-wide">📰 TODAY&apos;S HEADLINES</div>
                 </div>
             </div>
 
             <div className="container mx-auto px-4">
-                <div className="flex items-center justify-between h-16">
-
-                    <Link href="/" className="text-2xl font-black text-red-600 tracking-tighter shrink-0">
-                        NEWS<span className="text-black">PRESS</span>
+                <div className="flex h-16 items-center justify-between md:h-20">
+                    <Link
+                        href="/"
+                        className="text-xl font-black text-red-600 md:text-2xl tracking-tighter"
+                    >
+                        NEWS<span className="text-gray-900">PRESS</span>
                     </Link>
 
-                    <nav className="hidden lg:flex items-center gap-6">
-                        <Link href="/" className="font-bold hover:text-red-600 transition-colors">
-                            {content.home}
+                    <nav className="hidden lg:flex lg:items-center lg:gap-1">
+                        <Link
+                            href="/"
+                            className="rounded-md px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 hover:text-red-600"
+                        >
+                            Home
                         </Link>
 
                         {mainCategories.map((cat) => (
                             <Link
                                 key={cat.id}
                                 href={`/category/${cat.slug}`}
-                                className="font-medium hover:text-red-600 transition-colors whitespace-nowrap"
+                                className="rounded-md px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-red-600"
                             >
                                 {cat.name}
                             </Link>
@@ -113,13 +131,19 @@ export default function Navbar() {
 
                         {extraCategories.length > 0 && (
                             <DropdownMenu>
-                                <DropdownMenuTrigger className="flex items-center gap-1 font-medium hover:text-red-600 outline-none">
-                                    {content.more} <ChevronDown size={16} />
+                                <DropdownMenuTrigger className="flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium text-gray-700 outline-none transition-colors hover:bg-gray-100 hover:text-red-600">
+                                    More <ChevronDown size={16} />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start" className="w-48">
+                                <DropdownMenuContent
+                                    align="start"
+                                    className="w-48 rounded-xl border border-gray-200 bg-white p-1 shadow-xl"
+                                >
                                     {extraCategories.map((cat) => (
                                         <DropdownMenuItem key={cat.id} asChild>
-                                            <Link href={`/category/${cat.slug}`} className="w-full cursor-pointer">
+                                            <Link
+                                                href={`/category/${cat.slug}`}
+                                                className="w-full cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-red-600"
+                                            >
                                                 {cat.name}
                                             </Link>
                                         </DropdownMenuItem>
@@ -129,51 +153,97 @@ export default function Navbar() {
                         )}
                     </nav>
 
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger className="flex items-center gap-2 px-2 sm:px-3 py-1.5 border rounded-md hover:bg-gray-50 transition-all outline-none">
-                                <Languages size={16} className="text-gray-600" />
-                                <span className="text-xs font-bold">{lang}</span>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setLang("BN")} className="cursor-pointer font-medium">বাংলা</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setLang("EN")} className="cursor-pointer font-medium">English</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                            <Search size={20} />
+                    <div className="flex items-center gap-2">
+                        <button
+                            className="rounded-full p-2.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/20"
+                            aria-label="Search"
+                        >
+                            <Search size={22} />
                         </button>
+
+                        {loading ? (
+                            <div className="h-10 w-10 flex items-center justify-center">
+                                <Loader2 size={20} className="animate-spin text-gray-400" />
+                            </div>
+                        ) : session ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger className="outline-none">
+                                    <Avatar className="h-10 w-10 border border-gray-200 transition-transform hover:scale-105 active:scale-95">
+                                        <AvatarImage src={session.user.image || ""} />
+                                        <AvatarFallback className="bg-red-600 text-white font-bold">
+                                            {session.user.name.substring(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-64 rounded-xl p-2 shadow-2xl">
+                                    <DropdownMenuLabel className="p-3">
+                                        <div className="flex flex-col gap-1">
+                                            <p className="text-sm font-bold text-gray-900">{session.user.name}</p>
+                                            <p className="text-xs text-gray-500 font-medium truncate">{session.user.email}</p>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer py-2.5">
+                                        <Link href="/profile" className="flex items-center gap-2">
+                                            <User size={16} /> Profile
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer py-2.5">
+                                        <Link href="/settings" className="flex items-center gap-2">
+                                            <Settings size={16} /> Settings
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        onClick={handleLogout}
+                                        className="rounded-lg cursor-pointer py-2.5 text-red-600 focus:bg-red-50 focus:text-red-700"
+                                    >
+                                        <div className="flex items-center gap-2 font-semibold">
+                                            <LogOut size={16} /> Logout
+                                        </div>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <Link href="/login" className="hidden md:block">
+                                <button className="rounded-md bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-red-600">
+                                    Sign In
+                                </button>
+                            </Link>
+                        )}
 
                         <Sheet>
                             <SheetTrigger asChild>
-                                <button className="lg:hidden p-2 hover:bg-gray-100 rounded-md">
-                                    <Menu size={24} />
+                                <button className="rounded-md p-2 text-gray-600 transition-colors hover:bg-gray-100 lg:hidden">
+                                    <Menu size={26} />
                                 </button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="w-[350px]">
-                                <SheetHeader className="text-left border-b pb-4">
-                                    <SheetTitle className="text-red-600 font-black">NEWSPRESS</SheetTitle>
+                            <SheetContent side="right" className="w-[300px] p-0 shadow-2xl">
+                                <SheetHeader className="border-b p-6 text-left">
+                                    <SheetTitle className="text-xl font-black text-red-600">
+                                        NEWS<span className="text-gray-900">PRESS</span>
+                                    </SheetTitle>
                                 </SheetHeader>
-                                <div className="flex flex-col gap-4 p-5 mt-6">
-                                    <Link href="/" className="text-lg font-bold border-b pb-2">{content.home}</Link>
-                                    {content.categories.map((cat) => (
-                                        <Link key={cat.id} href={`/category/${cat.slug}`} className="text-lg font-medium border-b pb-2 hover:text-red-600">
+                                <div className="flex flex-col py-2">
+                                    <Link href="/" className="border-b px-6 py-4 text-sm font-semibold hover:bg-gray-50">Home</Link>
+                                    {categories.map((cat) => (
+                                        <Link key={cat.id} href={`/category/${cat.slug}`} className="border-b px-6 py-4 text-sm font-medium hover:bg-gray-50">
                                             {cat.name}
                                         </Link>
                                     ))}
-                                    <button className="mt-4 bg-black text-white px-5 py-3 rounded-lg font-bold">
-                                        {content.login}
-                                    </button>
+                                    {!session && (
+                                        <div className="p-6">
+                                            <Link href="/login">
+                                                <button className="w-full rounded-md bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-red-600">
+                                                    Sign In
+                                                </button>
+                                            </Link>
+                                        </div>
+                                    )}
                                 </div>
                             </SheetContent>
                         </Sheet>
-
-                        <button className="hidden md:block bg-black text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 transition-all">
-                            {content.login}
-                        </button>
                     </div>
-
                 </div>
             </div>
         </header>
