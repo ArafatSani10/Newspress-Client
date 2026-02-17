@@ -1,7 +1,7 @@
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { userService } from "@/services/user.service";
-import { Bell, LogOut, User as UserIcon } from "lucide-react";
+import { Bell, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import React from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { LogoutButton } from "@/components/dashboardlayouts/LogoutButton";
+import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
   admin,
@@ -21,8 +23,13 @@ export default async function DashboardLayout({
   admin: React.ReactNode;
   user: React.ReactNode;
 }) {
-  const { data } = await userService.getSession();
-  const userInfo = data?.user as any;
+  const { data, error } = await userService.getSession();
+
+  if (error || !data?.user) {
+    redirect("/login");
+  }
+
+  const userInfo = data.user as any;
 
   const getDashboardTitle = () => {
     return userInfo?.role === "ADMIN" ? "Admin Panel" : "User Dashboard";
@@ -40,7 +47,6 @@ export default async function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            
             <button className="p-2 rounded-full hover:bg-zinc-100 text-zinc-500 transition-colors">
               <Bell className="size-5" />
             </button>
@@ -61,7 +67,8 @@ export default async function DashboardLayout({
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-bold leading-none text-zinc-900">{userInfo?.name}</p>
-                    <p className="text-[10px] leading-none text-zinc-500 uppercase font-bold tracking-tighter">Role: {userInfo?.role}</p>
+                    <p className="text-[10px] leading-none text-zinc-500 uppercase font-bold tracking-tighter italic">{userInfo?.email}</p>
+                    <p className="text-[10px] leading-none text-zinc-400 uppercase font-bold tracking-tighter">Role: {userInfo?.role}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -69,9 +76,7 @@ export default async function DashboardLayout({
                   <UserIcon className="size-4" /> Profile
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer gap-2 text-red-500 focus:bg-red-50 rounded-sm transition-colors">
-                  <LogOut className="size-4" /> Logout
-                </DropdownMenuItem>
+                <LogoutButton />
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

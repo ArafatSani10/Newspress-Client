@@ -18,9 +18,9 @@ export const DASHBOARD_ROUTES = {
     {
       group: "Content Management",
       items: [
-        { title: "All News", url: "/admin-dashboard/news", icon: Newspaper },
-        { title: "Create News", url: "/admin-dashboard/news/create", icon: PlusCircle },
-        { title: "Categories", url: "/admin-dashboard/categories", icon: Layers },
+        { title: "Create Category", url: "/admin-categories", icon: Layers },
+        { title: "Create News", url: "admin-createNews", icon: PlusCircle },
+        { title: "All News", url: "/admin-allNews", icon: Newspaper },
       ],
     },
     {
@@ -32,7 +32,7 @@ export const DASHBOARD_ROUTES = {
     },
   ],
 
-  
+
   USER: [
     {
       group: "User Menu",

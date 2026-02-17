@@ -36,5 +36,15 @@ export const userService = {
             password: credentials.password,
             callbackURL: "/",
         });
+    },
+
+    logout: async function () {
+        return await authClient.signOut({
+            fetchOptions: {
+                onSuccess: () => {
+                    window.location.href = "/login";
+                },
+            },
+        });
     }
 };
