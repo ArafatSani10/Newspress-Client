@@ -15,7 +15,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#0f172a] text-gray-300 mt-12 pt-16 pb-8 font-sans">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
 
           <div className="space-y-6">
             <Link href="/" className="text-2xl max-sm:text-xl font-black  text-white">
