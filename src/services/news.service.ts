@@ -1,20 +1,24 @@
 export interface News {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  summary?: string;
+  featuredImage?: string;
+  videoUrl?: string;
+  viewCount: number;
+  isBreaking: boolean;
+  isFeatured: boolean;
+  createdAt: string;
+  categoryId: string; // শুধু আইডি
+  category?: {      // পুরো ক্যাটাগরি অবজেক্ট (এটি যোগ করুন)
     id: string;
-    title: string;
-    slug: string;
-    content: string;
-    summary?: string | null;
-    featuredImage?: string | null;
-    imageCaption?: string | null;
-    videoUrl?: string | null;
-    isFeatured: boolean;
-    isBreaking: boolean;
-    viewCount: number;
-    status: "DRAFT" | "PUBLISHED";
-    categoryId: string;
-    authorId: string;
-    createdAt: string;
-    updatedAt: string;
+    name: string;
+  };
+  author?: {
+    name: string;
+    image?: string;
+  };
 }
 
 export interface NewsResponse {
@@ -63,12 +67,12 @@ export const newsService = {
         }
     },
 
-    // এই মেথডটি ডিটেইলস পেজের জন্য
     getBySlug: async (slug: string): Promise<{ data: News | null; error: string | null }> => {
         try {
-            const response = await fetch(`${API_URL}/news/${slug}`, {
+            const response = await fetch(`${API_URL}/news/slug/${slug}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
+                cache: "no-store",
             });
             const result: NewsResponse = await response.json();
             if (!response.ok || !result.success) throw new Error(result.message || "Failed to fetch news details");

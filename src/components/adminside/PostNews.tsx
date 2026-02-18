@@ -44,23 +44,22 @@ export default function PostNews() {
 
   const form = useForm({
     defaultValues: {
-      title: '' as string,
-      content: '' as string,
-      summary: '' as string,
-      featuredImage: '' as string,
-      imageCaption: '' as string,
-      videoUrl: '' as string,
-      categoryId: '' as string,
-      status: 'PUBLISHED' as string,
-      isFeatured: false as boolean,
-      isBreaking: false as boolean,
+      title: '',
+      content: '',
+      summary: '',
+      featuredImage: '',
+      imageCaption: '',
+      videoUrl: '',
+      categoryId: '',
+      status: 'PUBLISHED',
+      isFeatured: false,
+      isBreaking: false,
     },
     validators: {
       onChange: ({ value }) => {
         if (!value.title || value.title.length < 5) return 'Title too short';
         if (!value.content || value.content.length < 20) return 'Content too short';
         if (!value.categoryId) return 'Category is required';
-        if (!value.featuredImage) return 'Image is required';
         return undefined;
       },
     },
@@ -144,7 +143,7 @@ export default function PostNews() {
         <form.Field name="featuredImage">
           {(field) => (
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Featured Image</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Featured Image <span className="text-gray-400 font-normal">(Optional)</span></label>
               <input
                 type="file"
                 accept="image/*"
@@ -152,7 +151,7 @@ export default function PostNews() {
                   const file = e.target.files?.[0];
                   if (file) handleImageUpload(file, field);
                 }}
-                className={`w-full p-2 border rounded-sm outline-none ${field.state.meta.errors.length ? 'border-red-500' : 'border-gray-300'}`}
+                className="w-full p-2 border border-gray-300 rounded-sm outline-none"
               />
               {field.state.value && (
                 <img src={field.state.value} alt="Preview" className="mt-2 h-20 w-32 object-cover rounded-sm border" />
