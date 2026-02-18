@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -26,16 +27,19 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
+    const [mounted, setMounted] = useState(false);
     const [currentTime, setCurrentTime] = useState("");
     const [session, setSession] = useState<any>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const pathname = usePathname();
 
     const mainCategories = categories.slice(0, 5);
     const extraCategories = categories.slice(5);
 
     useEffect(() => {
+        setMounted(true);
         const updateTime = () => {
             const now = new Date();
             setCurrentTime(
@@ -86,6 +90,20 @@ export default function Navbar() {
         });
     };
 
+    const isActive = (path: string) => pathname === path;
+
+    const NavSkeleton = () => (
+        <div className="flex items-center gap-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-4 w-16 animate-pulse rounded bg-gray-200"></div>
+            ))}
+        </div>
+    );
+
+    if (!mounted) {
+        return <header className="sticky top-0 z-50 h-20 w-full bg-white border-b" />;
+    }
+
     return (
         <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-md">
             <div className="hidden border-b border-gray-100 bg-gray-50/80 py-2 sm:block">
@@ -110,42 +128,63 @@ export default function Navbar() {
                     <nav className="hidden lg:flex lg:items-center lg:gap-1">
                         <Link
                             href="/"
-                            className="rounded-md px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 hover:text-red-600"
+                            className={`relative rounded-md px-4 py-2 text-sm font-semibold transition-colors hover:text-red-600 ${
+                                isActive("/") ? "text-red-600" : "text-gray-700"
+                            }`}
                         >
                             Home
+                            {isActive("/") && (
+                                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-red-600" />
+                            )}
                         </Link>
 
-                        {mainCategories.map((cat) => (
-                            <Link
-                                key={cat.id}
-                                href={`/category/${cat.slug}`}
-                                className="rounded-md px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-red-600"
-                            >
-                                {cat.name}
-                            </Link>
-                        ))}
+                        {loading ? (
+                            <NavSkeleton />
+                        ) : (
+                            <>
+                                {mainCategories.map((cat) => {
+                                    const catPath = `/category/${cat.slug}`;
+                                    return (
+                                        <Link
+                                            key={cat.id}
+                                            href={catPath}
+                                            className={`relative rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-red-600 ${
+                                                isActive(catPath) ? "text-red-600" : "text-gray-700"
+                                            }`}
+                                        >
+                                            {cat.name}
+                                            {isActive(catPath) && (
+                                                <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-red-600" />
+                                            )}
+                                        </Link>
+                                    );
+                                })}
 
-                        {extraCategories.length > 0 && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger className="flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium text-gray-700 outline-none transition-colors hover:bg-gray-100 hover:text-red-600">
-                                    More <ChevronDown size={16} />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                    align="start"
-                                    className="w-48 rounded-xl border border-gray-200 bg-white p-1 shadow-xl"
-                                >
-                                    {extraCategories.map((cat) => (
-                                        <DropdownMenuItem key={cat.id} asChild>
-                                            <Link
-                                                href={`/category/${cat.slug}`}
-                                                className="w-full cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-red-600"
-                                            >
-                                                {cat.name}
-                                            </Link>
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                {extraCategories.length > 0 && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger className="flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium text-gray-700 outline-none transition-colors hover:bg-gray-100 hover:text-red-600">
+                                            More <ChevronDown size={16} />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent
+                                            align="start"
+                                            className="w-48 rounded-xl border border-gray-200 bg-white p-1 shadow-xl"
+                                        >
+                                            {extraCategories.map((cat) => (
+                                                <DropdownMenuItem key={cat.id} asChild>
+                                                    <Link
+                                                        href={`/category/${cat.slug}`}
+                                                        className={`w-full cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-red-600 ${
+                                                            isActive(`/category/${cat.slug}`) ? "text-red-600 bg-red-50" : "text-gray-700"
+                                                        }`}
+                                                    >
+                                                        {cat.name}
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
+                            </>
                         )}
                     </nav>
 
@@ -221,13 +260,35 @@ export default function Navbar() {
                                     </SheetTitle>
                                 </SheetHeader>
                                 <div className="flex flex-col py-2 overflow-y-auto max-h-[calc(100vh-100px)]">
-                                    <Link href="/" className="border-b px-6 py-4 text-sm font-semibold hover:bg-gray-50">Home</Link>
-                                    {categories.map((cat) => (
-                                        <Link key={cat.id} href={`/category/${cat.slug}`} className="border-b px-6 py-4 text-sm font-medium hover:bg-gray-50">
-                                            {cat.name}
-                                        </Link>
-                                    ))}
-                                    {!session && (
+                                    <Link 
+                                        href="/" 
+                                        className={`border-b px-6 py-4 text-sm font-semibold hover:bg-gray-50 ${isActive("/") ? "text-red-600 bg-red-50" : "text-gray-700"}`}
+                                    >
+                                        Home
+                                    </Link>
+                                    
+                                    {loading ? (
+                                        <div className="space-y-4 p-6">
+                                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                                                <div key={i} className="h-4 w-full animate-pulse rounded bg-gray-100"></div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        categories.map((cat) => {
+                                            const mobilePath = `/category/${cat.slug}`;
+                                            return (
+                                                <Link 
+                                                    key={cat.id} 
+                                                    href={mobilePath} 
+                                                    className={`border-b px-6 py-4 text-sm font-medium hover:bg-gray-50 ${isActive(mobilePath) ? "text-red-600 bg-red-50" : "text-gray-700"}`}
+                                                >
+                                                    {cat.name}
+                                                </Link>
+                                            );
+                                        })
+                                    )}
+
+                                    {!session && !loading && (
                                         <div className="p-6">
                                             <Link href="/login">
                                                 <button className="w-full rounded-md bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-red-600">

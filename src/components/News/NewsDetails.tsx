@@ -57,11 +57,11 @@ export default function NewsDetails() {
   const MediaThumb = ({ item, heightClasses }: { item: News, heightClasses: string }) => (
     <div className={`relative ${heightClasses} w-full overflow-hidden rounded-sm bg-gray-50 mb-3 border border-gray-100`}>
       {item.featuredImage ? (
-        <Image 
-          src={item.featuredImage} 
-          alt="" 
-          fill 
-          className="object-cover group-hover:scale-105 transition-transform duration-500" 
+        <Image
+          src={item.featuredImage}
+          alt=""
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
         />
       ) : item.videoUrl ? (
         <iframe className="w-full h-full border-0" src={getYouTubeEmbedUrl(item.videoUrl) || ""} />
@@ -106,10 +106,10 @@ export default function NewsDetails() {
           <div className="mb-12 relative rounded-sm overflow-hidden bg-gray-50 border border-gray-100">
             {news.featuredImage ? (
               <div className="relative w-full aspect-video">
-                <Image 
-                  src={news.featuredImage} 
-                  alt={news.title} 
-                  fill 
+                <Image
+                  src={news.featuredImage}
+                  alt={news.title}
+                  fill
                   priority
                   className="object-cover"
                 />
@@ -125,9 +125,10 @@ export default function NewsDetails() {
             {news.content}
           </div>
 
-          <div className="space-y-8 bg-gray-50 p-6 rounded-sm border border-gray-100 mb-16">
-            <CommentBox />
-            <CommentList />
+          <div className="space-y-8 bg-gray-50 p-2 rounded-sm border border-gray-100 mb-16">
+            <CommentBox postId={news.id} />
+
+            <CommentList postId={news.id} />
           </div>
 
           <div className="pt-10 border-t border-gray-200">
@@ -138,7 +139,7 @@ export default function NewsDetails() {
                   <MediaThumb item={item} heightClasses="h-60 md:h-44" />
                   <div>
                     <span className="text-[9px] font-semibold text-red-600 uppercase tracking-widest block mb-1">
-                       {item.category?.name || "News"}
+                      {item.category?.name || "News"}
                     </span>
                     <h4 className="font-semibold text-base group-hover:text-red-600 transition-colors leading-snug tracking-wide line-clamp-2">
                       {item.title}
@@ -152,20 +153,20 @@ export default function NewsDetails() {
             </div>
 
             <div className="mt-12 flex items-center justify-center gap-6 pt-6 border-t border-gray-50">
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="p-1 hover:bg-gray-100 rounded-full disabled:opacity-10 transition-all"
               >
-                <ChevronLeft size={20}/>
+                <ChevronLeft size={20} />
               </button>
               <span className="text-[11px] font-semibold tracking-[0.2em] text-gray-400">{currentPage} / {totalPages}</span>
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="p-1 hover:bg-gray-100 rounded-full disabled:opacity-10 transition-all"
               >
-                <ChevronRight size={20}/>
+                <ChevronRight size={20} />
               </button>
             </div>
           </div>

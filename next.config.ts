@@ -12,8 +12,15 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
 
+// @ts-ignore
 export default withNextIntlConfig(nextConfig);
