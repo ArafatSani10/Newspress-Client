@@ -12,6 +12,11 @@ export interface Comment {
     userId: string;
     parentId: string | null;
     user: CommentUser;
+    post?: {
+        title: string;
+        slug: string;
+    };
+    news?: { title: string };
     replies?: Comment[];
     createdAt: string;
     updatedAt: string;
@@ -20,11 +25,13 @@ export interface Comment {
 interface ServiceResponse<T> {
     success: boolean;
     data?: T;
-    message: string;
+    message?: string;
 }
 
 interface FetchResponse<T> {
+    success: boolean;
     data: T;
+    message?: string;
     error: string | null;
 }
 
@@ -35,19 +42,12 @@ export const commentService = {
         try {
             const response = await fetch(`${API_URL}/comments`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
                 credentials: "include",
             });
-
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || "Failed to create comment");
-            }
-
+            if (!response.ok) throw new Error(result.message || "Failed to create comment");
             return { success: true, data: result, message: "Comment created successfully" };
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : "Something went wrong";
@@ -55,32 +55,40 @@ export const commentService = {
         }
     },
 
-    getByPostId: async (postId: string): Promise<FetchResponse<Comment[]>> => {
+    getAll: async (): Promise<FetchResponse<Comment[]>> => {
         try {
-            const response = await fetch(`${API_URL}/comments/post/${postId}`, {
+            const response = await fetch(`${API_URL}/comments`, {
                 method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 cache: "no-store",
             });
-
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || "Failed to fetch comments");
-            }
-
+            if (!response.ok) throw new Error(result.message || "Failed to fetch comments");
             return {
-                data: result,
+                success: true,
+                data: result.data || result,
                 error: null
             };
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
-            return {
-                data: [],
-                error: errorMessage
-            };
+            return { success: false, data: [], error: errorMessage };
+        }
+    },
+
+    getByPostId: async (postId: string): Promise<FetchResponse<Comment[]>> => {
+        try {
+            const response = await fetch(`${API_URL}/comments/post/${postId}`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+                cache: "no-store",
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || "Failed to fetch comments");
+            return { success: true, data: result, error: null };
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+            return { success: false, data: [], error: errorMessage };
         }
     },
 
@@ -88,19 +96,12 @@ export const commentService = {
         try {
             const response = await fetch(`${API_URL}/comments/${commentId}`, {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text }),
                 credentials: "include",
             });
-
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || "Failed to update comment");
-            }
-
+            if (!response.ok) throw new Error(result.message || "Failed to update comment");
             return { success: true, message: "Comment updated successfully" };
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : "Something went wrong";
@@ -112,18 +113,11 @@ export const commentService = {
         try {
             const response = await fetch(`${API_URL}/comments/${commentId}`, {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 credentials: "include",
             });
-
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || "Failed to delete comment");
-            }
-
+            if (!response.ok) throw new Error(result.message || "Failed to delete comment");
             return { success: true, message: result.message || "Comment deleted successfully" };
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : "Something went wrong";

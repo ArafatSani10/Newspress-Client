@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { newsService, News } from "@/services/news.service";
 import Link from "next/link";
 import Image from "next/image";
@@ -14,9 +14,9 @@ export default function Home() {
   const [latestPage, setLatestPage] = useState(1);
   const [topPage, setTopPage] = useState(1);
   const [mostReadPage, setMostReadPage] = useState(1);
-  
+
   const itemsPerPage = 4;
-  const itemsPerPageTop = 3; 
+  const itemsPerPageTop = 3;
 
   useEffect(() => {
     let isMounted = true;
@@ -32,15 +32,16 @@ export default function Home() {
     return () => { isMounted = false };
   }, []);
 
-  const getYouTubeEmbedUrl = (url: string) => {
+  const getYouTubeEmbedUrl = useCallback((url: string | null | undefined) => {
+    if (!url) return null;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
-  };
+  }, []);
 
-  const { 
-    latestBreakingNews, 
-    pagedLatestNews, 
+  const {
+    latestBreakingNews,
+    pagedLatestNews,
     latestTotal,
     pagedTopStories,
     topTotal,
@@ -50,52 +51,69 @@ export default function Home() {
     const sortedAll = [...allNews].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     const breaking = sortedAll.filter(n => n.isBreaking);
     const featured = sortedAll.filter(n => n.isFeatured);
-    const sortedMostRead = [...allNews].sort((a, b) => b.viewCount - a.viewCount);
+    const sortedMostRead = [...allNews].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
 
     return {
       latestBreakingNews: breaking[0],
       pagedLatestNews: sortedAll.slice((latestPage - 1) * itemsPerPage, latestPage * itemsPerPage),
-      latestTotal: Math.ceil(sortedAll.length / itemsPerPage),
+      latestTotal: Math.ceil(sortedAll.length / itemsPerPage) || 1,
       pagedTopStories: (featured.length > 0 ? featured : sortedAll).slice((topPage - 1) * itemsPerPageTop, topPage * itemsPerPageTop),
-      topTotal: Math.ceil((featured.length > 0 ? featured : sortedAll).length / itemsPerPageTop),
+      topTotal: Math.ceil((featured.length > 0 ? featured : sortedAll).length / itemsPerPageTop) || 1,
       pagedMostRead: sortedMostRead.slice((mostReadPage - 1) * itemsPerPage, mostReadPage * itemsPerPage),
-      mostReadTotal: Math.ceil(sortedMostRead.length / itemsPerPage)
+      mostReadTotal: Math.ceil(sortedMostRead.length / itemsPerPage) || 1
     };
   }, [allNews, latestPage, topPage, mostReadPage]);
 
   if (loading) return <HomeSkeleton />;
 
-  const MediaThumb = ({ news, heightClasses }: { news: News, heightClasses: string }) => (
-    <div className={`relative ${heightClasses} w-full overflow-hidden rounded-sm bg-gray-50 mb-3 border border-gray-100`}>
-      {news.featuredImage ? (
-        <Image 
-          src={news.featuredImage} 
-          alt="" 
-          fill 
-          className="object-cover group-hover:scale-105 transition-transform duration-500" 
-        />
-      ) : news.videoUrl ? (
-        <iframe className="w-full h-full border-0" src={getYouTubeEmbedUrl(news.videoUrl) || ""} />
-      ) : (
-        <div className="h-full w-full flex items-center justify-center text-[10px] text-gray-400 font-semibold uppercase tracking-widest">No Media</div>
-      )}
-    </div>
-  );
+  const MediaThumb = ({ news, heightClasses }: { news: News, heightClasses: string }) => {
+    const videoEmbed = news.videoUrl ? getYouTubeEmbedUrl(news.videoUrl) : null;
+
+    return (
+      <div className={`relative ${heightClasses} w-full overflow-hidden rounded-sm bg-gray-50 mb-3 border border-gray-100 group`}>
+        {news.featuredImage ? (
+          <Image
+            src={news.featuredImage}
+            alt={news.title || "News Image"}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : videoEmbed ? (
+          <iframe
+            className="w-full h-full border-0"
+            src={videoEmbed}
+            loading="lazy"
+            title={news.title}
+          />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
+            No Media
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-6 font-sans text-gray-900">
-      {/* Breaking News Marquee */}
+      
       <div className="mb-10 flex items-center bg-gray-50 border border-gray-200 p-1 rounded-sm">
-        <span className="shrink-0 bg-gray-900 text-white px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest rounded-sm">Breaking</span>
+        <span className="shrink-0 bg-gray-900 text-white px-4 py-1.5 text-[10px] font-semibold uppercase tracking-widest rounded-sm">
+          Breaking
+        </span>
         <div className="ml-4 flex-1 overflow-hidden">
-          {latestBreakingNews && (
+          {latestBreakingNews ? (
             <Link href={`/news/${latestBreakingNews.slug}`} className="block">
-              <marquee className="text-sm font-medium tracking-wide" scrollamount="5">{latestBreakingNews.title}</marquee>
+              <marquee className="text-sm font-medium tracking-wide" scrollamount="5">
+                {latestBreakingNews.title}
+              </marquee>
             </Link>
+          ) : (
+            <span className="text-sm text-gray-400 ml-2">No breaking news today</span>
           )}
         </div>
       </div>
-
       <div className="grid grid-cols-1 gap-12 md:grid-cols-12">
         {/* Left Sidebar: Latest News */}
         <aside className="md:col-span-3 order-2 md:order-1">
@@ -115,9 +133,9 @@ export default function Home() {
           </div>
           {/* Pagination */}
           <div className="mt-8 flex items-center justify-between pt-4 border-t border-gray-100">
-             <button onClick={() => setLatestPage(p => Math.max(1, p - 1))} disabled={latestPage === 1} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronLeft size={18}/></button>
-             <span className="text-[10px] font-semibold tracking-widest uppercase text-gray-400">{latestPage} / {latestTotal}</span>
-             <button onClick={() => setLatestPage(p => Math.min(latestTotal, p + 1))} disabled={latestPage === latestTotal} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronRight size={18}/></button>
+            <button onClick={() => setLatestPage(p => Math.max(1, p - 1))} disabled={latestPage === 1} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronLeft size={18} /></button>
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-gray-400">{latestPage} / {latestTotal}</span>
+            <button onClick={() => setLatestPage(p => Math.min(latestTotal, p + 1))} disabled={latestPage === latestTotal} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronRight size={18} /></button>
           </div>
         </aside>
 
@@ -126,16 +144,26 @@ export default function Home() {
           <div className="mb-6 border-b border-gray-900 pb-2">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-900">Featured Stories</h2>
           </div>
-          
+
           {pagedTopStories.length > 0 && (
             <div className="space-y-12">
               <Link href={`/news/${pagedTopStories[0].slug}`} className="group block">
                 <div className="relative aspect-video w-full overflow-hidden rounded-sm bg-gray-50 mb-5 border border-gray-100">
                   {pagedTopStories[0].featuredImage ? (
-                    <Image src={pagedTopStories[0].featuredImage} alt="" fill className="object-cover transition-transform group-hover:scale-105 duration-700" />
-                  ) : (
-                    <iframe className="w-full h-full border-0" src={getYouTubeEmbedUrl(pagedTopStories[0].videoUrl || "") || ""} />
-                  )}
+                    <Image
+                      src={pagedTopStories[0].featuredImage}
+                      alt={pagedTopStories[0].title}
+                      fill
+                      priority
+                      className="object-cover transition-transform group-hover:scale-105 duration-700"
+                    />
+                  ) : getYouTubeEmbedUrl(pagedTopStories[0].videoUrl) ? (
+                    <iframe
+                      className="w-full h-full border-0"
+                      src={getYouTubeEmbedUrl(pagedTopStories[0].videoUrl) as string}
+                      title="Featured Video"
+                    />
+                  ) : null}
                 </div>
                 <h1 className="text-2xl md:text-3xl font-semibold group-hover:text-red-600 leading-tight mb-3 tracking-wide transition-colors">{pagedTopStories[0].title}</h1>
                 <p className="text-gray-500 text-sm line-clamp-3 leading-relaxed tracking-wide">{pagedTopStories[0].summary || pagedTopStories[0].content?.substring(0, 160)}</p>
@@ -153,9 +181,9 @@ export default function Home() {
           )}
 
           <div className="mt-12 flex items-center justify-center gap-6 pt-6 border-t border-gray-100">
-             <button onClick={() => setTopPage(p => Math.max(1, p - 1))} disabled={topPage === 1} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronLeft size={20}/></button>
-             <span className="text-[11px] font-semibold tracking-[0.2em] text-gray-400">{topPage} / {topTotal}</span>
-             <button onClick={() => setTopPage(p => Math.min(topTotal, p + 1))} disabled={topPage === topTotal} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronRight size={20}/></button>
+            <button onClick={() => setTopPage(p => Math.max(1, p - 1))} disabled={topPage === 1} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronLeft size={20} /></button>
+            <span className="text-[11px] font-semibold tracking-[0.2em] text-gray-400">{topPage} / {topTotal}</span>
+            <button onClick={() => setTopPage(p => Math.min(topTotal, p + 1))} disabled={topPage === topTotal} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronRight size={20} /></button>
           </div>
         </main>
 
@@ -166,10 +194,9 @@ export default function Home() {
           </div>
           <div className="space-y-10 md:space-y-6">
             {pagedMostRead.map((news, index) => (
-              <Link href={`/news/${news.slug}`} key={news.id} className="group block border-b border-gray-50 pb-5 last:border-0">
-                {/* Image added here for Popular section */}
+              <Link href={`/news/${news.slug}`} key={news.id} prefetch={false} className="block group border-b border-gray-50 pb-5 last:border-0">
                 <MediaThumb news={news} heightClasses="h-60 md:h-44" />
-                
+
                 <div className="flex gap-4">
                   <span className="text-xl font-semibold text-gray-200 group-hover:text-red-600 transition-colors leading-none">
                     {String((mostReadPage - 1) * itemsPerPage + index + 1).padStart(2, '0')}
@@ -178,7 +205,7 @@ export default function Home() {
                     <h3 className="text-sm font-semibold text-gray-900 group-hover:text-red-600 transition-colors line-clamp-2 leading-tight tracking-wide">{news.title}</h3>
                     <div className="flex justify-between mt-2 font-semibold text-[9px] uppercase tracking-wider">
                       <span className="text-gray-400">{new Date(news.createdAt).toLocaleDateString("en-US")}</span>
-                      <span className="text-red-600">{news.viewCount.toLocaleString()} views</span>
+                      <span className="text-red-600">{(news.viewCount || 0).toLocaleString()} views</span>
                     </div>
                   </div>
                 </div>
@@ -187,9 +214,9 @@ export default function Home() {
           </div>
           {/* Pagination */}
           <div className="mt-8 flex items-center justify-between pt-4 border-t border-gray-100">
-             <button onClick={() => setMostReadPage(p => Math.max(1, p - 1))} disabled={mostReadPage === 1} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronLeft size={18}/></button>
-             <span className="text-[10px] font-semibold tracking-widest uppercase text-gray-400">{mostReadPage} / {mostReadTotal}</span>
-             <button onClick={() => setMostReadPage(p => Math.min(mostReadTotal, p + 1))} disabled={mostReadPage === mostReadTotal} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronRight size={18}/></button>
+            <button onClick={() => setMostReadPage(p => Math.max(1, p - 1))} disabled={mostReadPage === 1} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronLeft size={18} /></button>
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-gray-400">{mostReadPage} / {mostReadTotal}</span>
+            <button onClick={() => setMostReadPage(p => Math.min(mostReadTotal, p + 1))} disabled={mostReadPage === mostReadTotal} className="p-1 disabled:opacity-10 transition-all hover:bg-gray-100 rounded-full"><ChevronRight size={18} /></button>
           </div>
         </aside>
       </div>

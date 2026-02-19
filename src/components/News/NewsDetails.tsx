@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { newsService, News } from "@/services/news.service";
 import Link from "next/link";
@@ -18,22 +18,48 @@ export default function NewsDetails() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
 
+  const isFetched = useRef(false);
+
+  const getYouTubeEmbedUrl = useCallback((url: string | null | undefined) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}` : null;
+  }, []);
+
   useEffect(() => {
     const fetchPageData = async () => {
+      if (isFetched.current) return;
+
       try {
         if (!params.slug) return;
+        isFetched.current = true;
+
         const decodedSlug = decodeURIComponent(params.slug as string);
         const [detailsRes, allRes] = await Promise.all([
           newsService.getBySlug(decodedSlug),
           newsService.getAll()
         ]);
-        if (!detailsRes.error && detailsRes.data) setNews(detailsRes.data);
-        if (!allRes.error) setAllNews(allRes.data);
+
+        if (!detailsRes.error && detailsRes.data) {
+          setNews(detailsRes.data);
+        }
+
+        if (!allRes.error) {
+          setAllNews(allRes.data);
+        }
+      } catch (err) {
+        isFetched.current = false;
       } finally {
         setLoading(false);
       }
     };
+
     fetchPageData();
+
+    return () => {
+      isFetched.current = false;
+    };
   }, [params.slug]);
 
   const { pagedMoreNews, totalPages } = useMemo(() => {
@@ -41,35 +67,41 @@ export default function NewsDetails() {
     const start = (currentPage - 1) * itemsPerPage;
     return {
       pagedMoreNews: filtered.slice(start, start + itemsPerPage),
-      totalPages: Math.ceil(filtered.length / itemsPerPage)
+      totalPages: Math.ceil(filtered.length / itemsPerPage) || 1
     };
   }, [allNews, news, currentPage]);
-
-  const getYouTubeEmbedUrl = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}` : null;
-  };
 
   if (loading) return <SingleNewsSkeleton />;
   if (!news) return <div className="text-center py-20 font-semibold text-gray-400 tracking-wide">News not found!</div>;
 
-  const MediaThumb = ({ item, heightClasses }: { item: News, heightClasses: string }) => (
-    <div className={`relative ${heightClasses} w-full overflow-hidden rounded-sm bg-gray-50 mb-3 border border-gray-100`}>
-      {item.featuredImage ? (
-        <Image
-          src={item.featuredImage}
-          alt=""
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-      ) : item.videoUrl ? (
-        <iframe className="w-full h-full border-0" src={getYouTubeEmbedUrl(item.videoUrl) || ""} />
-      ) : (
-        <div className="h-full w-full flex items-center justify-center text-[10px] text-gray-400 font-semibold uppercase tracking-widest">No Media</div>
-      )}
-    </div>
-  );
+  const MediaThumb = ({ item, heightClasses }: { item: News, heightClasses: string }) => {
+    const videoId = item.videoUrl ? getYouTubeEmbedUrl(item.videoUrl) : null;
+
+    return (
+      <div className={`relative ${heightClasses} w-full overflow-hidden rounded-sm bg-gray-50 mb-3 border border-gray-100 group`}>
+        {item.featuredImage ? (
+          <Image
+            src={item.featuredImage}
+            alt={item.title || "News Image"}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : videoId ? (
+          <iframe
+            className="w-full h-full border-0"
+            src={videoId}
+            loading="lazy"
+            title="Video Content"
+          />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center text-[10px] text-gray-400 font-semibold uppercase tracking-widest">
+            No Media Available
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-10 font-sans text-gray-900">
@@ -88,10 +120,10 @@ export default function NewsDetails() {
           <div className="flex items-center gap-4 mb-10 pb-6 border-b border-gray-100">
             <div className="relative h-10 w-10 rounded-sm overflow-hidden bg-gray-100 border border-gray-200">
               {news.author?.image ? (
-                <Image src={news.author.image} alt="" fill className="object-cover" />
+                <Image src={news.author.image} alt={news.author.name || "Author"} fill className="object-cover" />
               ) : (
                 <div className="h-full w-full flex items-center justify-center bg-gray-900 text-white font-semibold text-xs uppercase">
-                  {news.author?.name?.charAt(0)}
+                  {news.author?.name?.charAt(0) || "A"}
                 </div>
               )}
             </div>
@@ -111,12 +143,17 @@ export default function NewsDetails() {
                   alt={news.title}
                   fill
                   priority
+                  sizes="(max-width: 1200px) 100vw, 800px"
                   className="object-cover"
                 />
               </div>
-            ) : news.videoUrl ? (
+            ) : news.videoUrl && getYouTubeEmbedUrl(news.videoUrl) ? (
               <div className="aspect-video w-full">
-                <iframe className="w-full h-full border-0" src={getYouTubeEmbedUrl(news.videoUrl) || ""} allowFullScreen />
+                <iframe
+                  className="w-full h-full border-0"
+                  src={getYouTubeEmbedUrl(news.videoUrl) as string}
+                  allowFullScreen
+                />
               </div>
             ) : null}
           </div>
@@ -125,9 +162,8 @@ export default function NewsDetails() {
             {news.content}
           </div>
 
-          <div className="space-y-8 bg-gray-50 p-2 rounded-sm border border-gray-100 mb-16">
+          <div className="space-y-8 bg-gray-50 p-4 rounded-sm border border-gray-100 mb-16">
             <CommentBox postId={news.id} />
-
             <CommentList postId={news.id} />
           </div>
 
@@ -173,7 +209,7 @@ export default function NewsDetails() {
         </main>
 
         <aside className="lg:col-span-4">
-          <div className=" top-10">
+          <div className="sticky top-10">
             <h3 className="text-xs font-semibold uppercase mb-6 border-b border-gray-900 pb-2 tracking-widest text-gray-500">Must Read</h3>
             <div className="space-y-10">
               {allNews

@@ -10,8 +10,8 @@ export interface News {
   isBreaking: boolean;
   isFeatured: boolean;
   createdAt: string;
-  categoryId: string; // শুধু আইডি
-  category?: {      // পুরো ক্যাটাগরি অবজেক্ট (এটি যোগ করুন)
+  categoryId: string; 
+  category?: {      
     id: string;
     name: string;
   };

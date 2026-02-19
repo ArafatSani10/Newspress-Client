@@ -106,7 +106,7 @@ export default function Navbar() {
 
     return (
         <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-md">
-            <div className="hidden border-b border-gray-100 bg-gray-50/80 py-2 sm:block">
+            <div className="hidden border-b border-gray-100 bg-gray-50/80 py-2 sm:hidden">
                 <div className="container mx-auto flex items-center justify-between px-4 text-xs font-medium text-gray-500">
                     <div className="flex items-center gap-1.5">
                         <Clock size={14} className="text-gray-400" />
@@ -223,11 +223,7 @@ export default function Navbar() {
                                             <User size={16} /> Dashboard
                                         </Link>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer py-2.5">
-                                        <Link href="/settings" className="flex items-center gap-2">
-                                            <Settings size={16} /> Settings
-                                        </Link>
-                                    </DropdownMenuItem>
+                                    
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                         onClick={handleLogout}
