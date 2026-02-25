@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const dynamic = "force-dynamic";
+"use client";
 
 import { LogoutButton } from "@/components/dashboardlayouts/LogoutButton";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
@@ -17,30 +17,45 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
-import { userService } from "@/services/user.service";
-import { Bell, User as UserIcon } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { Bell, Loader2, User as UserIcon } from "lucide-react";
 import Image from "next/image";
-import { redirect } from "next/navigation";
-import React from "react";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   admin,
   user,
 }: {
   admin: React.ReactNode;
   user: React.ReactNode;
 }) {
-  const { data, error } = await userService.getSession();
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  if (error || !data?.user) {
-    redirect("/login");
-  }
-
-  const userInfo = data.user as any;
+  useEffect(() => {
+    authClient.getSession().then(({ data, error }) => {
+      if (error || !data?.user) {
+        router.replace("/login");
+      } else {
+        setUserInfo(data.user);
+      }
+      setLoading(false);
+    });
+  }, [router]);
 
   const getDashboardTitle = () => {
     return userInfo?.role === "ADMIN" ? "Admin Panel" : "User Dashboard";
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#FAFAFA]">
+        <Loader2 className="size-8 animate-spin text-zinc-400" />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>

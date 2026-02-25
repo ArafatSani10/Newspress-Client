@@ -20,6 +20,31 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  rewrites: async () => {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `https://newspress-server-beta.vercel.app/api/v1/:path*`,
+      },
+      {
+        source: "/api/auth/:path*",
+        destination: `https://newspress-server-beta.vercel.app/api/auth/:path*`,
+      },
+    ];
+  },
+  headers: async () => {
+    return [
+      {
+        source: "/api/:path*",
+        headers: [
+          {
+            key: "Access-Control-Allow-Credentials",
+            value: "true",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 const finalConfig = withNextIntlConfig(nextConfig);

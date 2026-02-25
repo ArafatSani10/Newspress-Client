@@ -1,19 +1,44 @@
 import { authClient } from "@/lib/auth-client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const AUTH_BASE_URL = "https://newspress-server-beta.vercel.app/api/auth";
 
 export const userService = {
   getSession: async function () {
     try {
-      let fetchOptions = {};
+      // Server-side: forward cookies directly via raw fetch to avoid
+      // better-auth client not merging headers properly in SSR context
       if (typeof window === "undefined") {
-        const { headers } = await import("next/headers");
-        fetchOptions = { headers: await headers() };
+        const { cookies } = await import("next/headers");
+        const cookieStore = await cookies();
+        const cookieHeader = cookieStore
+          .getAll()
+          .map((c) => `${c.name}=${c.value}`)
+          .join("; ");
+
+        const res = await fetch(`${AUTH_BASE_URL}/get-session`, {
+          headers: {
+            cookie: cookieHeader,
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          return { data: null, error: { message: "Session is missing.." } };
+        }
+
+        const session = await res.json();
+
+        if (!session || !session.user) {
+          return { data: null, error: { message: "Session is missing.." } };
+        }
+
+        return { data: session, error: null };
       }
 
-      const { data: session, error } = await authClient.getSession({
-        fetchOptions,
-      });
+      // Client-side: use authClient as normal
+      const { data: session, error } = await authClient.getSession();
 
       if (error || !session) {
         return {
