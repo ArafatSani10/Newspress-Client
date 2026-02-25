@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export const dynamic = "force-dynamic";
+
 import { LogoutButton } from "@/components/dashboardlayouts/LogoutButton";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import {
