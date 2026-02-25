@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { commentService, Comment } from "@/services/comment.service";
 import { authClient } from "@/lib/auth-client";
-import { Trash2, Edit3, CornerDownRight, X, LogIn, Check, Clock } from "lucide-react";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Comment, commentService } from "@/services/comment.service";
+import { Clock, CornerDownRight, Edit3, LogIn, Trash2, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface CommentListProps {
   postId: string;
@@ -90,8 +90,11 @@ export default function CommentList({ postId }: CommentListProps) {
   );
 
   const ActionButtons = ({ id, userId, text }: { id: string, userId: string, text: string }) => {
-    const isOwner = session?.user?.id === userId;
-    const isAdmin = session?.user?.role === "ADMIN";
+    const currentUser = session?.user as
+      | { id?: string; role?: string }
+      | undefined;
+    const isOwner = currentUser?.id === userId;
+    const isAdmin = currentUser?.role === "ADMIN";
     if (!isOwner && !isAdmin) return null;
     return (
       <div className="flex items-center gap-2 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white px-2 py-1 rounded-full shadow-sm border border-gray-100">

@@ -1,26 +1,31 @@
-import withNextIntl from 'next-intl/plugin';
+import type { NextConfig } from "next";
+import withNextIntl from "next-intl/plugin";
 
-const withNextIntlConfig = withNextIntl('./src/i18n.ts'); 
+const withNextIntlConfig = withNextIntl("./src/i18n.ts");
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'i.ibb.co',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "i.ibb.co",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'img.youtube.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "img.youtube.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },
 };
 
-// @ts-ignore
-export default withNextIntlConfig(nextConfig);
+const finalConfig = withNextIntlConfig(nextConfig);
+
+if (finalConfig.experimental && "turbo" in finalConfig.experimental) {
+  delete (finalConfig.experimental as { turbo?: unknown }).turbo;
+}
+
+export default finalConfig;

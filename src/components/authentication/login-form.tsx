@@ -1,19 +1,18 @@
 "use client"
 
-import React, { useState } from "react"
-import { useForm } from "@tanstack/react-form"
-import { zodValidator } from "@tanstack/zod-form-adapter"
-import * as z from "zod"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Loader2, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils";
 import { userService } from "@/services/user.service"
-import { toast } from "sonner"
+import { useForm } from "@tanstack/react-form";
+import { AlertCircle, Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation"
-import Link from "next/link"
+import React, { useState } from "react";
+import { toast } from "sonner";
+import * as z from "zod";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -26,39 +25,40 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
-  const form = useForm<LoginValues>({
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-    validatorAdapter: zodValidator(),
+  const defaultValues: LoginValues = {
+    email: "",
+    password: "",
+  };
+
+  const form = useForm({
+    defaultValues,
     validators: {
       onChange: loginSchema,
     },
     onSubmit: async ({ value }) => {
-      setIsSubmitting(true)
-      const toastId = toast.loading("Verifying credentials...")
+      setIsSubmitting(true);
+      const toastId = toast.loading("Verifying credentials...");
 
       try {
         const res = await userService.login({
           email: value.email,
           password: value.password,
-        })
+        });
 
         if (res.error) {
-          toast.error(res.error.message || "Login failed", { id: toastId })
-          setIsSubmitting(false)
+          toast.error(res.error.message || "Login failed", { id: toastId });
+          setIsSubmitting(false);
         } else {
-          toast.success("Login successful! Welcome back.", { id: toastId })
-          router.push("/")
-          router.refresh()
+          toast.success("Login successful! Welcome back.", { id: toastId });
+          router.push("/");
+          router.refresh();
         }
       } catch (err: any) {
-        toast.error("An unexpected error occurred", { id: toastId })
-        setIsSubmitting(false)
+        toast.error("An unexpected error occurred", { id: toastId });
+        setIsSubmitting(false);
       }
     },
-  })
+  });
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

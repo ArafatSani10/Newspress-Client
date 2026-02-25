@@ -1,21 +1,37 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
-import { 
-    MessageSquare, Search, Trash2, RefreshCw, 
-    Calendar, ArrowUpDown, User, Newspaper, FilterX, ExternalLink 
-} from "lucide-react";
-import { 
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Comment, commentService } from "@/services/comment.service";
+import {
+  ArrowUpDown,
+  ExternalLink,
+  FilterX,
+  MessageSquare,
+  Newspaper,
+  RefreshCw,
+  Search,
+  Trash2,
+  User,
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { commentService, Comment } from "@/services/comment.service";
 
 export default function AllComment() {
     const [comments, setComments] = useState<Comment[]>([]);
@@ -153,49 +169,88 @@ export default function AllComment() {
                                 </TableRow>
                             ))
                         ) : filteredAndSortedComments.map((comment) => {
-                            const postData = comment.post || comment.news;
+                            const postSlug = comment.post?.slug;
+                            const postTitle =
+                              comment.post?.title || comment.news?.title;
                             return (
-                                <TableRow key={comment.id} className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors group">
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-8 w-8 rounded-full bg-zinc-100 flex items-center justify-center border border-zinc-200 overflow-hidden">
-                                                {comment.user?.image ? <img src={comment.user.image} className="h-full w-full object-cover" /> : <User size={14} className="text-zinc-400" />}
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-zinc-900 truncate max-w-[120px]">{comment.user?.name || "Guest"}</span>
-                                                <span className="text-[10px] text-zinc-400 font-bold uppercase">{comment.user?.role}</span>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <p className="text-sm text-zinc-600 font-medium line-clamp-2 italic">"{comment.text}"</p>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Newspaper size={14} className="text-zinc-300 shrink-0" />
-                                            {postData?.slug || postData?.title ? (
-                                                <Link 
-                                                    href={`/news/${postData.slug || '#'}`} 
-                                                    target="_blank"
-                                                    className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1 group/link"
-                                                >
-                                                    <span className="line-clamp-1">{postData.title || "View News"}</span>
-                                                    <ExternalLink size={10} className="opacity-0 group-hover/link:opacity-100" />
-                                                </Link>
-                                            ) : (
-                                                <span className="text-xs font-bold text-red-400">Post Unavailable</span>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-xs font-bold text-zinc-500">
-                                        {new Date(comment.createdAt).toLocaleDateString()}
-                                    </TableCell>
-                                    <TableCell className="text-right px-6">
-                                        <Button onClick={() => handleDelete(comment.id)} variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all">
-                                            <Trash2 size={16} />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
+                              <TableRow
+                                key={comment.id}
+                                className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors group"
+                              >
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-8 w-8 rounded-full bg-zinc-100 flex items-center justify-center border border-zinc-200 overflow-hidden">
+                                      {comment.user?.image ? (
+                                        <img
+                                          src={comment.user.image}
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        <User
+                                          size={14}
+                                          className="text-zinc-400"
+                                        />
+                                      )}
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-bold text-zinc-900 truncate max-w-[120px]">
+                                        {comment.user?.name || "Guest"}
+                                      </span>
+                                      <span className="text-[10px] text-zinc-400 font-bold uppercase">
+                                        {comment.user?.role}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <p className="text-sm text-zinc-600 font-medium line-clamp-2 italic">
+                                    "{comment.text}"
+                                  </p>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Newspaper
+                                      size={14}
+                                      className="text-zinc-300 shrink-0"
+                                    />
+                                    {postSlug || postTitle ? (
+                                      <Link
+                                        href={
+                                          postSlug ? `/news/${postSlug}` : "#"
+                                        }
+                                        target="_blank"
+                                        className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1 group/link"
+                                      >
+                                        <span className="line-clamp-1">
+                                          {postTitle || "View News"}
+                                        </span>
+                                        <ExternalLink
+                                          size={10}
+                                          className="opacity-0 group-hover/link:opacity-100"
+                                        />
+                                      </Link>
+                                    ) : (
+                                      <span className="text-xs font-bold text-red-400">
+                                        Post Unavailable
+                                      </span>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs font-bold text-zinc-500">
+                                  {new Date(
+                                    comment.createdAt,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-right px-6">
+                                  <Button
+                                    onClick={() => handleDelete(comment.id)}
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-zinc-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
                             );
                         })}
                     </TableBody>

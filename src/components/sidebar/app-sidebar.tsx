@@ -1,22 +1,22 @@
 "use client";
 
-import * as React from "react";
-import { DASHBOARD_ROUTES } from "@/routes/admin.routes";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarGroup,
-    SidebarGroupLabel,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Newspaper, LogOut } from "lucide-react";
+import { DASHBOARD_ROUTES } from "@/routes/admin.routes";
 import { userService } from "@/services/user.service";
+import { LogOut, Newspaper } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import * as React from "react";
 
 export function AppSidebar() {
     const pathname = usePathname();
@@ -25,7 +25,10 @@ export function AppSidebar() {
     React.useEffect(() => {
         const fetchUserRole = async () => {
             const { data } = await userService.getSession();
-            setRole(data?.user?.role as "ADMIN" | "USER");
+            const currentUser = data?.user as
+              | { role?: "ADMIN" | "USER" }
+              | undefined;
+            setRole(currentUser?.role || null);
         };
         fetchUserRole();
     }, []);

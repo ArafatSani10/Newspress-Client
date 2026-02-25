@@ -1,19 +1,18 @@
 "use client"
 
-import React, { useState } from "react"
-import { useForm } from "@tanstack/react-form"
-import { zodValidator } from "@tanstack/zod-form-adapter"
-import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, UploadCloud, AlertCircle } from "lucide-react"
+import { userService } from "@/services/user.service";
+import { useForm } from "@tanstack/react-form";
+import { AlertCircle, Loader2, UploadCloud } from "lucide-react";
 import Image from "next/image"
-import Link from "next/link"
-import { userService } from "@/services/user.service"
-import { toast } from "sonner"
+import Link from "next/link";
 import { useRouter } from "next/navigation"
+import { useState } from "react";
+import { toast } from "sonner";
+import * as z from "zod";
 
 const signupSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
@@ -42,50 +41,51 @@ export function SignupForm() {
     return data.data.url
   }
 
-  const form = useForm<SignupValues>({
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      profileImage: null,
-    },
-    validatorAdapter: zodValidator(),
+  const defaultValues: SignupValues = {
+    name: "",
+    email: "",
+    password: "",
+    profileImage: null,
+  };
+
+  const form = useForm({
+    defaultValues,
     validators: {
       onChange: signupSchema,
     },
     onSubmit: async ({ value }) => {
-      setIsSubmitting(true)
-      const toastId = toast.loading("Creating account...")
+      setIsSubmitting(true);
+      const toastId = toast.loading("Creating account...");
 
       try {
-        let imageUrl = ""
+        let imageUrl = "";
         if (value.profileImage) {
-          imageUrl = await uploadToImgBB(value.profileImage)
+          imageUrl = await uploadToImgBB(value.profileImage);
         }
 
         const res = await userService.register({
           name: value.name,
           email: value.email,
           password: value.password,
-          image: imageUrl || undefined
-        })
+          image: imageUrl || undefined,
+        });
 
         if (res.error) {
-          toast.error(res.error.message, { id: toastId })
-          setIsSubmitting(false)
+          toast.error(res.error.message, { id: toastId });
+          setIsSubmitting(false);
         } else {
-          toast.success("Account created! Redirecting...", { id: toastId })
+          toast.success("Account created! Redirecting...", { id: toastId });
 
           setTimeout(() => {
-            router.push("/login")
-          }, 2000)
+            router.push("/login");
+          }, 2000);
         }
       } catch (err: any) {
-        toast.error(err.message || "Failed to register", { id: toastId })
-        setIsSubmitting(false)
+        toast.error(err.message || "Failed to register", { id: toastId });
+        setIsSubmitting(false);
       }
     },
-  })
+  });
 
   return (
     <Card className="max-w-md mx-auto border-zinc-200 shadow-xl dark:border-zinc-800">

@@ -10,10 +10,11 @@ export interface News {
   isBreaking: boolean;
   isFeatured: boolean;
   createdAt: string;
-  categoryId: string; 
-  category?: {      
+  categoryId: string;
+  category?: {
     id: string;
     name: string;
+    slug?: string;
   };
   author?: {
     name: string;

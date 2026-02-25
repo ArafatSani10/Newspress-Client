@@ -1,12 +1,13 @@
-import GetNews from '@/components/adminside/GetNews'
-import React from 'react'
+export const dynamic = "force-dynamic";
+
+import GetNews from "@/components/adminside/GetNews";
 
 export default function AllNews() {
   return (
     <div>
-    <div>
+      <div>
         <GetNews></GetNews>
+      </div>
     </div>
-    </div>
-  )
+  );
 }
