@@ -2,8 +2,8 @@ import { userService } from "@/services/user.service";
 import { NextRequest, NextResponse } from "next/server";
 
 const Roles = {
-    ADMIN: "ADMIN",
-    USER: "USER",
+  ADMIN: "ADMIN",
+  USER: "USER",
 };
 
 export async function middleware(request: NextRequest) {
