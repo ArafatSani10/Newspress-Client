@@ -6,8 +6,6 @@ const AUTH_BASE_URL = "https://newspress-server-beta.vercel.app/api/auth";
 export const userService = {
   getSession: async function () {
     try {
-      // Server-side: forward cookies directly via raw fetch to avoid
-      // better-auth client not merging headers properly in SSR context
       if (typeof window === "undefined") {
         const { cookies } = await import("next/headers");
         const cookieStore = await cookies();
