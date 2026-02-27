@@ -1,7 +1,9 @@
 import { authClient } from "@/lib/auth-client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-const AUTH_BASE_URL = "https://newspress-server-beta.vercel.app/api/auth";
+const AUTH_BASE_URL =
+  process.env.NEXT_PUBLIC_AUTH_BASE_URL ||
+  "https://newspress-server-beta.vercel.app/api/auth";
 
 export const userService = {
   getSession: async function () {
